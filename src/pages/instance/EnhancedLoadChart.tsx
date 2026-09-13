@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Card, Flex, SegmentedControl, Switch, Text } from "@radix-ui/themes";
 import { formatBytes } from "../../components/Node";
 import { useNodeList } from "@/contexts/NodeListContext";
-import fillMissingTimePoints, { type RecordFormat } from "@/utils/RecordHelper";
+import fillMissingTimePoints, { type RecordFormat, powerChartLabels } from "@/utils/RecordHelper";
 import {
   Area,
   AreaChart,
@@ -19,7 +19,7 @@ import {
 } from "recharts";
 import { usePublicInfo } from "@/contexts/PublicInfoContext";
 import Loading from "@/components/loading";
-import { Cpu, HardDrive, Server, Network, Activity, Link } from "lucide-react";
+import { Cpu, HardDrive, Server, Network, Activity, Link, Zap } from "lucide-react";
 import "@/components/DesktopChart.css";
 
 type EnhancedLoadChartProps = {
@@ -212,6 +212,15 @@ const EnhancedLoadChart = ({ data = [] }: EnhancedLoadChartProps) => {
           } else if (entry.name === "process") {
             displayValue = Math.round(entry.value);
             displayName = t("nodeCard.process");
+          } else if (
+            entry.name?.includes("(RAPL)") ||
+            entry.name?.includes("(PPT)") ||
+            entry.name === "GPU Power" ||
+            entry.name === "GPU"
+          ) {
+            // 功耗图表：单位 W，名称已按 SoC/CPU/GPU 范围标注
+            displayValue = `${entry.value?.toFixed(1) ?? 0} W`;
+            displayName = entry.name;
           }
           
           return (
@@ -260,6 +269,35 @@ const EnhancedLoadChart = ({ data = [] }: EnhancedLoadChartProps) => {
       domain: [0, 100],
       formatter: (value: number) => `${value.toFixed(1)}%`,
       type: "area",
+    },
+    {
+      title: powerChartLabels(live_data).cpu,
+      icon: <Zap size={16} />,
+      value: (
+        <Flex direction="column" align="end" gap="0">
+          <Text size="1">
+            {live_data?.power?.cpu ? `RAPL ${live_data.power.cpu.toFixed(1)} W` : "-"}
+            {live_data?.power?.gpus && live_data.power.gpus.length > 0
+              ? ` / PPT ${Math.max(...live_data.power.gpus.map((g) => g.watts || 0)).toFixed(1)} W`
+              : ""}
+          </Text>
+          {live_data?.power?.source && (
+            <Text size="1" color="gray">
+              {live_data.power.source}
+            </Text>
+          )}
+        </Flex>
+      ),
+      data: chartData,
+      dataKey: ["power", "power_gpu"],
+      color: ["var(--orange-9)", "var(--yellow-9)"],
+      names: [
+        powerChartLabels(live_data).cpuShort,
+        powerChartLabels(live_data).gpuShort,
+      ],
+      formatter: (value: number) => `${value?.toFixed(1) ?? "0"} W`,
+      type: "line",
+      isMultiLine: true,
     },
     {
       title: t("nodeCard.ram"),
@@ -470,6 +508,7 @@ const EnhancedLoadChart = ({ data = [] }: EnhancedLoadChartProps) => {
                             key={key}
                             type="monotone"
                             dataKey={key}
+                            name={chart.names ? chart.names[i] : undefined}
                             stroke={Array.isArray(chart.color) ? chart.color[i] : chart.color}
                             fill={Array.isArray(chart.color) ? chart.color[i] : chart.color}
                             fillOpacity={0.3}
@@ -529,6 +568,7 @@ const EnhancedLoadChart = ({ data = [] }: EnhancedLoadChartProps) => {
                             key={key}
                             type="monotone"
                             dataKey={key}
+                            name={chart.names ? chart.names[i] : undefined}
                             stroke={Array.isArray(chart.color) ? chart.color[i] : chart.color}
                             strokeWidth={chartConfig.strokeWidth}
                             dot={false}

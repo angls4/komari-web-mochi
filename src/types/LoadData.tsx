@@ -18,6 +18,8 @@ export interface LoadRecord {
   process: number;
   connections: number;
   connections_udp: number;
+  power: number;
+  power_gpu: number;
 }
 
 export interface LoadDataResponse {
@@ -32,6 +34,8 @@ export interface LoadDataResponse {
 export type MetricType = 
   | "cpu"
   | "gpu"
+  | "power"
+  | "power_gpu"
   | "ram"
   | "swap"
   | "load"
@@ -74,6 +78,20 @@ export const METRIC_CONFIGS: Record<MetricType, MetricConfig> = {
     unit: "%",
     color: "#8B5CF6",
     max: 100,
+    category: "system"
+  },
+  power: {
+    key: "power",
+    label: "Power",
+    unit: "W",
+    color: "#F97316",
+    category: "system"
+  },
+  power_gpu: {
+    key: "power_gpu",
+    label: "GPU Power",
+    unit: "W",
+    color: "#EAB308",
     category: "system"
   },
   ram: {

@@ -20,6 +20,39 @@ export interface RecordFormat {
   process: number | null;
   connections: number | null;
   connections_udp: number | null;
+  power: number | null;
+  power_gpu: number | null;
+}
+
+// Scope-aware labels for the power chart. The agent reports `cpu_scope`:
+// "soc" when the power counters span CPU+GPU (AMD APUs, where both the RAPL
+// package and the amdgpu PPT cover the whole SoC), "cpu" for a CPU-only
+// package (desktops/discrete-GPU machines). Falls back to neutral labels for
+// older agents that don't send the hint.
+export function powerChartLabels(liveData?: any): {
+  cpu: string;
+  cpuShort: string;
+  gpu: string;
+  gpuShort: string;
+} {
+  const scope = liveData?.power?.cpu_scope;
+  if (scope === "soc") {
+    return {
+      cpu: "SoC Power (RAPL)",
+      cpuShort: "SoC (RAPL)",
+      gpu: "SoC PPT (SMU)",
+      gpuShort: "SoC (PPT)",
+    };
+  }
+  if (scope === "cpu") {
+    return {
+      cpu: "CPU Power (RAPL)",
+      cpuShort: "CPU Package",
+      gpu: "GPU Power",
+      gpuShort: "GPU",
+    };
+  }
+  return { cpu: "Power", cpuShort: "Power", gpu: "GPU Power", gpuShort: "GPU" };
 }
 
 export function liveDataToRecords(
@@ -47,6 +80,8 @@ export function liveDataToRecords(
     process: data.process ?? 0,
     connections: data.connections.tcp ?? 0,
     connections_udp: data.connections.udp ?? 0,
+    power: data.power?.cpu ?? 0,
+    power_gpu: data.power?.gpus?.reduce((acc, g) => Math.max(acc, g.watts ?? 0), 0) ?? 0,
   }));
 }
 

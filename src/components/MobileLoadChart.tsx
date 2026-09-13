@@ -12,7 +12,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import fillMissingTimePoints, { type RecordFormat } from "@/utils/RecordHelper";
+import fillMissingTimePoints, { type RecordFormat, powerChartLabels } from "@/utils/RecordHelper";
 import { usePublicInfo } from "@/contexts/PublicInfoContext";
 import Loading from "@/components/loading";
 import "./MobileChart.css";
@@ -227,11 +227,27 @@ export const MobileLoadChart: React.FC<MobileLoadChartProps> = ({
             displayValue = formatBytes(entry.value);
           } else if (entry.name === "CPU" || entry.name === "ram") {
             displayValue = entry.value.toFixed(1) + "%";
+          } else if (
+            entry.name?.includes("(RAPL)") ||
+            entry.name?.includes("(PPT)") ||
+            entry.name === "GPU Power" ||
+            entry.name === "GPU"
+          ) {
+            // 功耗图表：每条线有自己的名称，单位 W
+            displayValue = entry.value.toFixed(1) + " W";
           }
           
           return (
             <Text key={index} size="1" style={{ color: entry.color }}>
-              {chartTitle && !entry.name.includes("net") ? chartTitle : displayName}: {displayValue}
+              {chartTitle &&
+              !entry.name.includes("net") &&
+              !entry.name.includes("(RAPL)") &&
+              !entry.name.includes("(PPT)") &&
+              entry.name !== "GPU Power" &&
+              entry.name !== "GPU"
+                ? chartTitle
+                : displayName}
+              : {displayValue}
             </Text>
           );
         })}
@@ -248,6 +264,25 @@ export const MobileLoadChart: React.FC<MobileLoadChartProps> = ({
       color: "var(--red-9)",
       formatter: (value: number) => `${value.toFixed(1)}%`,
       domain: [0, 100],
+    },
+    {
+      title: powerChartLabels(liveData).cpu,
+      value: liveData?.power?.cpu
+        ? `${liveData.power.cpu.toFixed(1)} W${
+            liveData?.power?.gpus && liveData.power.gpus.length > 0
+              ? ` / GPU ${Math.max(...liveData.power.gpus.map((g: { watts?: number }) => g.watts || 0)).toFixed(1)} W`
+              : ""
+          }`
+        : "-",
+      data: chartData,
+      dataKey: ["power", "power_gpu"],
+      color: ["var(--orange-9)", "var(--yellow-9)"],
+      names: [
+        powerChartLabels(liveData).cpuShort,
+        powerChartLabels(liveData).gpuShort,
+      ],
+      formatter: (value: number) => `${value?.toFixed(1) ?? "0"} W`,
+      isMultiLine: true,
     },
     {
       title: t("nodeCard.ram"),
@@ -381,6 +416,7 @@ export const MobileLoadChart: React.FC<MobileLoadChartProps> = ({
                           key={key}
                           type="monotone"
                           dataKey={key}
+                          name={chart.names ? chart.names[i] : undefined}
                           stroke={Array.isArray(chart.color) ? chart.color[i] : chart.color}
                           strokeWidth={chartConfig.strokeWidth}
                           dot={false}
