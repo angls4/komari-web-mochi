@@ -1,7 +1,7 @@
 {
   "name": "komari-web",
   "private": true,
-  "version": "v1.1.8.power",
+  "version": "v1.1.9.power",
   "type": "module",
   "scripts": {
     "dev": "vite",
