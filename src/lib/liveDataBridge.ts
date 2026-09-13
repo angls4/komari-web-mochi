@@ -212,6 +212,18 @@ export class LiveDataBridge {
           rec.gpu !== undefined
             ? { count: 0, average_usage: rec.gpu, detailed_info: [] }
             : undefined,
+        power:
+          (rec.power !== undefined && rec.power > 0) ||
+          (rec.power_gpu !== undefined && rec.power_gpu > 0)
+            ? {
+                cpu: rec.power ?? 0,
+                cpu_scope: rec.power_scope,
+                gpus:
+                  rec.power_gpu !== undefined && rec.power_gpu > 0
+                    ? [{ name: "GPU", watts: rec.power_gpu }]
+                    : undefined,
+              }
+            : undefined,
         uptime: rec.uptime ?? 0,
         process: rec.process ?? 0,
         message: "",
