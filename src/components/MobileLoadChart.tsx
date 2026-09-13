@@ -194,6 +194,23 @@ export const MobileLoadChart: React.FC<MobileLoadChartProps> = ({
     );
   }, [hoursView, remoteData, data, memoizedAvailableView, t]);
 
+  // 选定时间范围内的平均功耗（W）
+  const powerAvg = useMemo(() => {
+    const values = chartData
+      .map((d) => d.power)
+      .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+    if (!values.length) return null;
+    return values.reduce((a, b) => a + b, 0) / values.length;
+  }, [chartData]);
+
+  const powerGpuAvg = useMemo(() => {
+    const values = chartData
+      .map((d) => d.power_gpu)
+      .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+    if (!values.length) return null;
+    return values.reduce((a, b) => a + b, 0) / values.length;
+  }, [chartData]);
+
   // 简化的图表配置
   const chartConfig = {
     margin: { top: 5, right: 5, bottom: 5, left: 5 },
@@ -271,6 +288,12 @@ export const MobileLoadChart: React.FC<MobileLoadChartProps> = ({
         ? `${liveData.power.cpu.toFixed(1)} W${
             liveData?.power?.gpus && liveData.power.gpus.length > 0
               ? ` / GPU ${Math.max(...liveData.power.gpus.map((g: { watts?: number }) => g.watts || 0)).toFixed(1)} W`
+              : ""
+          }${
+            powerAvg != null
+              ? ` (Avg ${powerAvg.toFixed(1)} W${
+                  powerGpuAvg != null ? ` / GPU ${powerGpuAvg.toFixed(1)} W` : ""
+                })`
               : ""
           }`
         : "-",

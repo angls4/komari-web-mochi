@@ -167,6 +167,23 @@ const EnhancedLoadChart = ({ data = [] }: EnhancedLoadChartProps) => {
     );
   }, [hoursView, remoteData, data, availableView, t]);
 
+  // 选定时间范围内的平均功耗（W）
+  const powerAvg = useMemo(() => {
+    const values = chartData
+      .map((d) => d.power)
+      .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+    if (!values.length) return null;
+    return values.reduce((a, b) => a + b, 0) / values.length;
+  }, [chartData]);
+
+  const powerGpuAvg = useMemo(() => {
+    const values = chartData
+      .map((d) => d.power_gpu)
+      .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+    if (!values.length) return null;
+    return values.reduce((a, b) => a + b, 0) / values.length;
+  }, [chartData]);
+
   // 自定义Tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
@@ -280,6 +297,10 @@ const EnhancedLoadChart = ({ data = [] }: EnhancedLoadChartProps) => {
             {live_data?.power?.gpus && live_data.power.gpus.length > 0
               ? ` / PPT ${Math.max(...live_data.power.gpus.map((g) => g.watts || 0)).toFixed(1)} W`
               : ""}
+          </Text>
+          <Text size="1" color="gray">
+            Avg: {powerAvg != null ? `${powerAvg.toFixed(1)} W` : "-"}
+            {powerGpuAvg != null ? ` / Avg GPU: ${powerGpuAvg.toFixed(1)} W` : ""}
           </Text>
           {live_data?.power?.source && (
             <Text size="1" color="gray">
