@@ -25,6 +25,8 @@ export default function InstancePage() {
   const { nodeList } = useNodeList();
   const length = 60 * 5;
   const [chartView, setChartView] = useState<"load" | "ping">("load");
+  const [powerPlacement, setPowerPlacement] = useState<"side" | "top" | "bottom">("side");
+  const avgPower = recent.length ? recent.reduce((s, r) => s + (r.cpu?.usage || 0), 0) / recent.length : 0;
   const isMobile = useIsMobile();
   // #region 初始数据加载
   const node = nodeList?.find((n) => n.uuid === uuid);
@@ -152,7 +154,16 @@ export default function InstancePage() {
           </div>
         </div>
 
-        {node && <DesktopDetailsCard node={node} liveData={liveNodeData} />}
+        <div style={{ padding: '8px 0' }}>
+          <label>Power placement: </label>
+          <select value={powerPlacement} onChange={(e) => setPowerPlacement(e.target.value as any)}>
+            <option value="side">Side</option>
+            <option value="top">Top</option>
+            <option value="bottom">Bottom</option>
+          </select>
+        </div>
+
+        {node && <DesktopDetailsCard node={node} liveData={liveNodeData} avgValue={avgPower} placement={powerPlacement} />}
 
         <div className="node-detail-chart-card node-detail-animate" style={{ ["--delay" as any]: "320ms" }}>
           <div className="node-detail-chart-header">

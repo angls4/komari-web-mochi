@@ -6,17 +6,22 @@ import { getTrafficStats } from "@/utils";
 import type { NodeBasicInfo } from "@/contexts/NodeListContext";
 import type { Record } from "@/types/LiveData";
 import { MetricBar } from "./MetricBar";
+import UsageBar from "./UsageBar";
 import { TrafficLimitChart } from "./TrafficLimitChart";
 import { usePingSummary } from "@/hooks/use-ping-summary";
 
 interface DesktopDetailsCardProps {
   node: NodeBasicInfo;
   liveData?: Record;
+  avgValue?: number;
+  placement?: "side" | "top" | "bottom";
 }
 
 export const DesktopDetailsCard: React.FC<DesktopDetailsCardProps> = ({
   node,
   liveData,
+  avgValue,
+  placement = "side",
 }) => {
   const { t } = useTranslation();
   const runtimeStackRef = useRef<HTMLDivElement | null>(null);
@@ -145,6 +150,9 @@ export const DesktopDetailsCard: React.FC<DesktopDetailsCardProps> = ({
               <MetricBar value={swapUsagePercent} />
             </div>
           )}
+          <div className="node-detail-metric" style={{ marginTop: 8 }}>
+            <UsageBar label="Power Avg" value={liveData ? (liveData.cpu?.usage || 0) : 0} avgValue={avgValue} placement={placement} />
+          </div>
           {hasTrafficLimit && (
             <TrafficLimitChart
               label={t("nodeCard.trafficLimit")}

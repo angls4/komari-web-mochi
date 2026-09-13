@@ -2,12 +2,14 @@ import { Box, Flex, Text } from '@radix-ui/themes';
 import { motion } from 'framer-motion'; // For smooth animations
 
 interface UsageBarProps {
-  value: number; // Utilization percentage (0–100)
-  label: string; // Label for the bar (e.g., "CPU", "Memory", "Disk")
-  compact?: boolean; // Whether to show in compact mode (for tables)
+  value: number;
+  label: string;
+  compact?: boolean;
+  avgValue?: number;
+  placement?: "top" | "bottom" | "side";
 }
 
-const UsageBar = ({ value, label, compact = false }: UsageBarProps) => {
+const UsageBar = ({ value, label, compact = false, avgValue, placement = "side" }: UsageBarProps) => {
   // For display purposes, we show the actual value (can exceed 100%)
   const displayValue = Math.max(value, 0);
   // For progress bar width, cap at 100%
@@ -22,6 +24,8 @@ const UsageBar = ({ value, label, compact = false }: UsageBarProps) => {
   };
 
   const barColor = getColor(displayValue);
+
+  const avgDisplay = avgValue !== undefined ? `Avg: ${avgValue.toFixed(1)}%` : null;
 
   if (compact) {
     return (
@@ -48,20 +52,20 @@ const UsageBar = ({ value, label, compact = false }: UsageBarProps) => {
           />
         </Box>
         <label color="gray" className='text-sm'>
-          {displayValue.toFixed(1)}%
+          {displayValue.toFixed(1)}% {avgDisplay ? `(${avgDisplay})` : ''}
         </label>
       </Box>
     );
   }
 
   return (
-    <Flex direction="column" gap="1" style={{ width: '100%' }}>
+    <Flex direction={placement === "side" ? "column" : placement === "top" ? "column-reverse" : "column"} gap="1" style={{ width: placement === "side" ? '100%' : 'auto' }}>
       <Flex justify="between" align="center">
         <Text size="2" color="gray">
           {label}
         </Text>
         <Text size="2" weight="medium">
-          {displayValue.toFixed(1)}%
+          {displayValue.toFixed(1)}% {avgDisplay ? <span style={{ color: 'var(--gray-9)' }}>({avgDisplay})</span> : null}
         </Text>
       </Flex>
       <Box
